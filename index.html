@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUGAKOD | ALAYON SA UMA</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="container nav-container">
+            <a href="#home" class="logo">
+                <span class="logo-mark">S</span>
+                <span>SUGAKOD</span>
+            </a>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+
+            <nav class="nav" id="mainNav">
+                <a href="#home">Home</a>
+                <a href="#buyers">Buyer Directory</a>
+                <a href="#map-section">Buyer Map</a>
+                <a href="#prices">Market Prices</a>
+                <a href="#crops">Crop Guide</a>
+                <a href="#about">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="home">
+            <div class="container hero-content">
+                <div class="hero-text">
+                    <span class="eyebrow">ALAYON SA UMA</span>
+                    <h1>Connecting Farmers to <span>Better Opportunities.</span></h1>
+                    <p>
+                        SUGAKOD is a farmer information platform that helps small
+                        farmers explore potential buyers, understand agricultural
+                        prices, and access useful farming information in Manolo
+                        Fortich and nearby areas.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="#buyers" class="btn btn-primary">Explore Buyers</a>
+                        <a href="#prices" class="btn btn-outline">View Market Prices</a>
+                    </div>
+                </div>
+
+                <div class="hero-card">
+                    <span class="hero-card-icon">🌱</span>
+                    <h3>Support Local Farmers</h3>
+                    <p>Better information. More opportunities. Stronger agricultural communities.</p>
+                    <div class="hero-card-footer">ALAYON SA UMA PROJECT</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="intro-strip">
+            <div class="container intro-grid">
+                <div>
+                    <strong>Buyer Information</strong>
+                    <span>Explore potential agricultural buyers.</span>
+                </div>
+                <div>
+                    <strong>Market Price References</strong>
+                    <span>Understand different agricultural price categories.</span>
+                </div>
+                <div>
+                    <strong>Farmer Resources</strong>
+                    <span>Access practical crop information.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="buyers">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">BUYER DIRECTORY</span>
+                        <h2>Explore Potential Buyers</h2>
+                        <p>Discover agricultural businesses and potential market connections in Bukidnon and nearby provinces.</p>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <input type="search" id="buyerSearch" placeholder="Search buyer, location, or product...">
+                    <select id="statusFilter">
+                        <option value="all">All statuses</option>
+                        <option value="Potential">Potential buyer</option>
+                        <option value="Regional lead">Regional lead</option>
+                    </select>
+                </div>
+
+                <div class="notice">
+                    <strong>Important:</strong> Listings are potential leads, not guaranteed buyers.
+                    Farmers should contact and verify purchasing requirements before transporting products.
+                </div>
+
+                <div class="buyer-grid" id="buyerList"></div>
+            </div>
+        </section>
+
+        <section class="section map-section" id="map-section">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">GEOGRAPHIC DIRECTORY</span>
+                        <h2>Potential Buyer Map</h2>
+                        <p>Explore the approximate areas associated with listed buyer leads.</p>
+                    </div>
+                </div>
+
+                <div class="map-legend">
+                    <span><i class="legend-dot local"></i> Manolo Fortich lead</span>
+                    <span><i class="legend-dot regional"></i> Regional lead without confirmed map location</span>
+                </div>
+
+                <div class="map-layout">
+                    <div class="map-wrapper">
+                        <div id="buyerMap"></div>
+                        <div class="map-status" id="mapLoadStatus">Preparing buyer map...</div>
+                    </div>
+
+                    <aside class="map-panel" id="buyerMapPanel">
+                        <div class="panel-overview">
+                            <span class="eyebrow">MAP OVERVIEW</span>
+                            <h3>Buyer Information</h3>
+                            <p>Select a marker on the map to view the corresponding buyer information.</p>
+
+                            <div class="map-stat">
+                                <strong id="mappedCount">0</strong>
+                                <span>Approximate areas mapped</span>
+                            </div>
+
+                            <div class="map-stat">
+                                <strong id="regionalCount">0</strong>
+                                <span>Regional leads without confirmed map locations</span>
+                            </div>
+
+                            <p class="small-note">
+                                Map markers indicate approximate areas, not verified business premises or receiving stations.
+                            </p>
+                        </div>
+                    </aside>
+                </div>
+
+                <p class="map-disclaimer">
+                    Map information is for general reference. Exact business addresses, receiving locations,
+                    and purchasing activities must be confirmed directly with each business.
+                </p>
+            </div>
+        </section>
+
+        <section class="section" id="prices">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">AGRICULTURAL PRICE INFORMATION</span>
+                        <h2>Market Price References</h2>
+                        <p>Reference prices from government publications and reported buyer information.</p>
+                    </div>
+                </div>
+
+                <div class="price-warning">
+                    <strong>Read before comparing prices:</strong>
+                    Farmgate prices, buyer-reported prices, and retail prices are different.
+                    Retail prices are what consumers may pay in markets; they are not necessarily
+                    the amount farmers receive.
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="price-table">
+                        <thead>
+                            <tr>
+                                <th>Commodity</th>
+                                <th>Price</th>
+                                <th>Unit</th>
+                                <th>Price Category</th>
+                                <th>Coverage</th>
+                                <th>Reference Date</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="priceRows"></tbody>
+                    </table>
+                </div>
+
+                <p class="small-note">
+                    These are historical reference figures, not live quotations or guaranteed buying prices.
+                    Check the original source for updated figures before making a selling decision.
+                </p>
+            </div>
+        </section>
+
+        <section class="section crop-section" id="crops">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">FARMER RESOURCES</span>
+                        <h2>Crop Information Guide</h2>
+                        <p>Basic information and reminders for common agricultural products.</p>
+                    </div>
+                </div>
+
+                <div class="crop-grid" id="cropList"></div>
+            </div>
+        </section>
+
+        <section class="section about-section" id="about">
+            <div class="container about-content">
+                <div>
+                    <span class="eyebrow">ABOUT THE PROJECT</span>
+                    <h2>ALAYON SA UMA</h2>
+                    <p>
+                        ALAYON SA UMA is an initiative focused on helping small farmers
+                        strengthen their access to agricultural market information and
+                        potential buyers.
+                    </p>
+                    <p>
+                        SUGAKOD serves as an information component of the initiative.
+                        It provides a directory of potential buyers, geographic references,
+                        agricultural price information, and basic crop resources.
+                    </p>
+                </div>
+
+                <div class="about-card">
+                    <h3>Our Purpose</h3>
+                    <ul>
+                        <li>Improve access to buyer information.</li>
+                        <li>Provide transparent agricultural price references.</li>
+                        <li>Help farmers identify potential market opportunities.</li>
+                        <li>Encourage verification before selling or transporting crops.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <div>
+                <strong>SUGAKOD | ALAYON SA UMA</strong>
+                <p>Supporting informed agricultural decisions in Manolo Fortich and nearby communities.</p>
+            </div>
+            <span>Student-led project • 2026</span>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
