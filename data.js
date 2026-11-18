@@ -1,7 +1,7 @@
-
 const buyerData = [
   {
     id: 1,
+    lat: 8.37, lng: 124.86, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "Maneki-neko Cassava Trading OPC",
     address: "Lot 2 Block 14, Ansaldo Farm, San Miguel, Manolo Fortich, Bukidnon",
     products: ["Cassava"],
@@ -16,6 +16,7 @@ const buyerData = [
   },
   {
     id: 2,
+    lat: 8.356, lng: 124.813, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "POLCAS Agri Trade",
     address: "Damilag, Manolo Fortich, Bukidnon",
     products: ["Cassava", "Corn", "Copra", "Copra cake", "Rice"],
@@ -30,6 +31,7 @@ const buyerData = [
   },
   {
     id: 3,
+    lat: 8.37, lng: 124.86, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "AGRI DE ORO VMB MARKETING",
     address: "Puerto area, Manolo Fortich, Bukidnon",
     products: ["Agricultural products"],
@@ -38,12 +40,13 @@ const buyerData = [
     phone: "",
     geocodeQuery: "AGRI DE ORO VMB MARKETING, Puerto, Manolo Fortich, Bukidnon, Philippines",
     locationAccuracy: "Approximate area; exact business address and receiving location need confirmation",
-    sourceName: "Previously identified business lead",
+    sourceName: "Project team lead list (not yet verified)",
     sourceUrl: "https://www.google.com/maps/search/?api=1&query=AGRI+DE+ORO+VMB+MARKETING+Manolo+Fortich",
     notes: "Potential agricultural trading contact. Direct purchasing, accepted crops, business address, and contact details need confirmation before farmers arrange deliveries."
   },
   {
     id: 4,
+    lat: 8.37, lng: 124.86, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "NSL AGRI TRADING",
     address: "Manolo Fortich, Bukidnon",
     products: ["Agricultural products"],
@@ -52,16 +55,17 @@ const buyerData = [
     phone: "",
     geocodeQuery: "NSL AGRI TRADING, Manolo Fortich, Bukidnon, Philippines",
     locationAccuracy: "Municipality-level location; exact business premises need confirmation",
-    sourceName: "Previously identified business lead",
+    sourceName: "Project team lead list (not yet verified)",
     sourceUrl: "https://www.google.com/maps/search/?api=1&query=NSL+AGRI+TRADING+Manolo+Fortich",
     notes: "Potential agricultural trading contact. Confirm its current operations, accepted commodities, direct farmer purchasing arrangements, and exact business location."
   },
   {
     id: 5,
+    lat: 8.15, lng: 125.0, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "Bio Green Processing and Manufacturing, Inc.",
     address: "Bukidnon, Philippines",
     products: ["Cassava"],
-    status: "Potential",
+    status: "Regional lead",
     locationType: "Regional processing company",
     phone: "",
     locationAccuracy: "Province-level location; exact facility location needs confirmation",
@@ -71,10 +75,11 @@ const buyerData = [
   },
   {
     id: 6,
+    lat: 8.15, lng: 125.0, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "Phil Agro Industrial Corporation",
     address: "Bukidnon, Philippines",
     products: ["Cassava"],
-    status: "Potential",
+    status: "Regional lead",
     locationType: "Regional agricultural industry lead",
     phone: "",
     locationAccuracy: "Province-level location; exact facility location needs confirmation",
@@ -84,10 +89,11 @@ const buyerData = [
   },
   {
     id: 7,
+    lat: 8.5, lng: 124.65, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "San Miguel Foods, Inc.",
     address: "Misamis Oriental, Philippines",
     products: ["Cassava", "Agricultural raw materials"],
-    status: "Potential",
+    status: "Regional lead",
     locationType: "Regional food and agricultural company",
     phone: "",
     locationAccuracy: "Province-level location; exact receiving facility needs confirmation",
@@ -97,10 +103,11 @@ const buyerData = [
   },
   {
     id: 8,
+    lat: 8.5, lng: 124.65, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "Daesang Philippines, Corp.",
     address: "Misamis Oriental, Philippines",
     products: ["Cassava"],
-    status: "Potential",
+    status: "Regional lead",
     locationType: "Regional food processing company",
     phone: "",
     locationAccuracy: "Province-level location; exact receiving facility needs confirmation",
@@ -110,6 +117,7 @@ const buyerData = [
   },
   {
     id: 9,
+    lat: 8.356, lng: 124.813, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "Traders Market Site",
     address: "P-18, Menzi, Damilag, Manolo Fortich, 8703 Bukidnon, Philippines",
     products: ["Vegetables", "Fresh produce"],
@@ -124,6 +132,7 @@ const buyerData = [
   },
   {
     id: 10,
+    lat: 8.41, lng: 124.79, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "WR Fresh Vegetables",
     address: "Zone II, Alae, Manolo Fortich, 8703 Bukidnon, Philippines",
     products: ["Vegetables", "Fresh fruits"],
@@ -134,10 +143,11 @@ const buyerData = [
     locationAccuracy: "Public business listing location; confirm exact receiving entrance",
     sourceName: "Public business listing",
     sourceUrl: "https://www.google.com/maps/search/?api=1&query=WR+Fresh+Vegetables+Alae+Manolo+Fortich",
-    notes: "Corresponds to the WR Fresh Market lead requested for the directory. Listed as a fruit and vegetable wholesaler. Direct farmer purchasing and current crop requirements need confirmation."
+    notes: "Listed as a fruit and vegetable wholesaler. Direct farmer purchasing and current crop requirements need confirmation."
   },
   {
     id: 11,
+    lat: 8.37, lng: 124.86, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "M's Fresh Hydro Picks",
     address: "N.R. Ver Street, Tankulan, Manolo Fortich, Bukidnon, Philippines",
     products: ["Fresh vegetables", "Hydroponic produce"],
@@ -152,6 +162,7 @@ const buyerData = [
   },
   {
     id: 12,
+    lat: 8.37, lng: 124.86, coordsVerified: false, // approximate area; set coordsVerified: true only after confirming the exact spot
     name: "Anakciano Incorporated",
     address: "Manolo Fortich, Bukidnon, Philippines",
     products: ["Corn", "Grains", "Feed ingredients"],
@@ -293,6 +304,7 @@ const cropData = [
   {
     id: 1,
     name: "Corn",
+    icon: "🌽",
     description: "An important agricultural crop used for food, livestock feed, and other agricultural products.",
     plantingReminder: "Check the recommended variety, planting schedule, soil condition, and local weather before planting.",
     harvestReminder: "Harvest at the appropriate maturity and dry grains properly to help maintain quality.",
@@ -301,6 +313,7 @@ const cropData = [
   {
     id: 2,
     name: "Cassava",
+    icon: "🥔",
     description: "A root crop used for food, starch, animal feed, and various processed products.",
     plantingReminder: "Use healthy planting materials and prepare well-drained soil.",
     harvestReminder: "Harvest according to the variety and intended market. Handle roots carefully to reduce damage.",
@@ -309,6 +322,7 @@ const cropData = [
   {
     id: 3,
     name: "Rice",
+    icon: "🌾",
     description: "A major food crop and an important source of livelihood for many farming households.",
     plantingReminder: "Follow the recommended planting calendar and proper water and nutrient management practices.",
     harvestReminder: "Harvest at the recommended maturity and dry palay properly before storage or delivery.",
@@ -317,9 +331,18 @@ const cropData = [
   {
     id: 4,
     name: "Vegetables",
+    icon: "🥬",
     description: "A broad crop group that includes leafy vegetables, fruit vegetables, and other fresh produce.",
     plantingReminder: "Choose suitable varieties and consider the local climate, soil condition, and water availability.",
     harvestReminder: "Harvest at the correct maturity and use clean containers to minimize bruising and spoilage.",
     marketReminder: "Contact traders and wholesalers before harvesting to confirm demand, grades, packaging, quantities, and delivery arrangements."
   }
+];
+
+const resourceData = [
+  { name: "Manolo Fortich Digital Agriculture Marketplace", description: "The existing local marketplace. SUGAKOD complements it and does not replace it.", url: "", contact: "" },
+  { name: "Municipal Agriculture Office, Manolo Fortich", description: "Local agricultural services, technical assistance, and farmer programs.", url: "", contact: "" },
+  { name: "Department of Agriculture Region 10", description: "Regional announcements, programs, and buyer or price information for Northern Mindanao.", url: "https://cagayandeoro.da.gov.ph/", contact: "" },
+  { name: "Philippine Statistics Authority (PSA)", description: "Official agricultural price and production statistics.", url: "https://psa.gov.ph/", contact: "" },
+  { name: "Provincial Government of Bukidnon", description: "Provincial publications, statistics, and agricultural information.", url: "https://bukidnon.gov.ph/", contact: "" }
 ];
