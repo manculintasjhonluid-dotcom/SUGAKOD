@@ -1,682 +1,645 @@
 
-document.addEventListener("DOMContentLoaded", () => {
-    const buyerList = document.getElementById("buyerList");
-    const priceRows = document.getElementById("priceRows");
-    const cropList = document.getElementById("cropList");
-    const buyerSearch = document.getElementById("buyerSearch");
-    const statusFilter = document.getElementById("statusFilter");
-    const mapLoadStatus = document.getElementById("mapLoadStatus");
-    const buyerMapPanel = document.getElementById("buyerMapPanel");
+const buyerList = document.getElementById("buyerList");
+const priceRows = document.getElementById("priceRows");
+const cropList = document.getElementById("cropList");
+const buyerSearch = document.getElementById("buyerSearch");
+const statusFilter = document.getElementById("statusFilter");
+const mapStatus = document.getElementById("mapLoadStatus");
 
-    let buyerMap = null;
-    let buyerMarkers = [];
-    let geocodedBuyers = [];
-    let selectedBuyer = null;
+let buyerMap = null;
+let buyerMarkers = [];
+let mapIsLoading = false;
 
-    const getBuyers = () =>
-        Array.isArray(window.buyerData) ? window.buyerData : [];
+function safe(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[character]);
+}
 
-    const getPrices = () =>
-        Array.isArray(window.priceData) ? window.priceData : [];
+function safeUrl(value) {
+    try {
+        const url = new URL(String(value ?? ""));
 
-    const getCrops = () =>
-        Array.isArray(window.cropData) ? window.cropData : [];
-
-    function safe(value) {
-        return String(value ?? "").replace(/[&<>"']/g, character => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        })[character]);
-    }
-
-    function safeUrl(value) {
-        if (!value) return "";
-
-        try {
-            const url = new URL(value);
-
-            if (url.protocol === "http:" || url.protocol === "https:") {
-                return url.href;
-            }
-        } catch (error) {
-            return "";
+        if (url.protocol === "https:" || url.protocol === "http:") {
+            return url.href;
         }
-
-        return "";
+    } catch (error) {
+        return "#";
     }
 
-    function getProducts(buyer) {
-        const products = buyer.products || buyer.crops || buyer.commodities;
+    return "#";
+}
 
-        if (Array.isArray(products)) {
-            return products.join(", ");
-        }
+function getBuyers() {
+    return typeof buyerData !== "undefined" && Array.isArray(buyerData)
+        ? buyerData
+        : [];
+}
 
-        return products || buyer.product || buyer.notes || "Not specified";
-    }
+function getPrices() {
+    return typeof priceData !== "undefined" && Array.isArray(priceData)
+        ? priceData
+        : [];
+}
 
-    function getPhone(buyer) {
-        return buyer.phone || buyer.contact || "Not available";
-    }
+function getCrops() {
+    return typeof cropData !== "undefined" && Array.isArray(cropData)
+        ? cropData
+        : [];
+}
 
-    function getBuyerAddress(buyer) {
-        return buyer.address || buyer.location || "Location not specified";
-    }
+function renderBuyers() {
+    if (!buyerList) return;
 
-    function getStatus(buyer) {
-        return buyer.status || "Potential";
-    }
+    const buyers = getBuyers();
 
-    function getBuyerAccuracy(buyer) {
-        return buyer.locationAccuracy ||
-            "Location is approximate. Contact the buyer to confirm the exact business address.";
-    }
+    const searchValue = String(buyerSearch?.value ?? "").toLowerCase().trim();
+    const selectedStatus = String(statusFilter?.value ?? "all");
 
-    function renderBuyers() {
-        if (!buyerList) return;
+    const filteredBuyers = buyers.filter(buyer => {
+        if (!buyer || typeof buyer !== "object") return false;
 
-        const searchValue = buyerSearch
-            ? buyerSearch.value.toLowerCase().trim()
-            : "";
+        const products = Array.isArray(buyer.products)
+            ? buyer.products
+            : [];
 
-        const selectedStatus = statusFilter
-            ? statusFilter.value.toLowerCase()
-            : "all";
+        const searchableText = [
+            buyer.name,
+            buyer.address,
+            products.join(" "),
+            buyer.status
+        ].map(value => String(value ?? "")).join(" ").toLowerCase();
 
-        const filteredBuyers = getBuyers().filter(buyer => {
-            const searchableText = [
-                buyer.name,
-                getBuyerAddress(buyer),
-                getProducts(buyer),
-                buyer.notes,
-                buyer.status
-            ].join(" ").toLowerCase();
+        const matchesSearch = searchableText.includes(searchValue);
 
-            const matchesSearch = searchableText.includes(searchValue);
+        const matchesStatus =
+            selectedStatus === "all" ||
+            String(buyer.status ?? "") === selectedStatus;
 
-            const matchesStatus =
-                selectedStatus === "all" ||
-                getStatus(buyer).toLowerCase() === selectedStatus;
+        return matchesSearch && matchesStatus;
+    });
 
-            return matchesSearch && matchesStatus;
-        });
-
-        if (filteredBuyers.length === 0) {
-            buyerList.innerHTML = `
-                <p class="empty-message">No buyers found.</p>
-            `;
-            return;
-        }
-
-        buyerList.innerHTML = filteredBuyers.map(buyer => {
-            const phone = getPhone(buyer);
-            const source = safeUrl(buyer.sourceUrl);
-
-            return `
-                <div class="buyer-card">
-                    <div class="buyer-card-header">
-                        <h3>${safe(buyer.name)}</h3>
-                        <span class="buyer-status">
-                            ${safe(getStatus(buyer))}
-                        </span>
-                    </div>
-
-                    <p>
-                        <strong>Location:</strong>
-                        ${safe(getBuyerAddress(buyer))}
-                    </p>
-
-                    <p>
-                        <strong>Products:</strong>
-                        ${safe(getProducts(buyer))}
-                    </p>
-
-                    <p>
-                        <strong>Contact:</strong>
-                        ${safe(phone)}
-                    </p>
-
-                    <p>
-                        <strong>Information:</strong>
-                        ${safe(buyer.notes || "No additional information available.")}
-                    </p>
-
-                    ${source ? `
-                        <a href="${source}" target="_blank" rel="noopener noreferrer">
-                            View Source
-                        </a>
-                    ` : ""}
-                </div>
-            `;
-        }).join("");
-    }
-
-    function renderPrices() {
-        if (!priceRows) return;
-
-        const prices = getPrices();
-
-        if (prices.length === 0) {
-            priceRows.innerHTML = `
-                <tr>
-                    <td colspan="6">No price information available.</td>
-                </tr>
-            `;
-            return;
-        }
-
-        priceRows.innerHTML = prices.map(item => {
-            const commodity = item.commodity || item.category || "Not specified";
-            const priceType = item.priceType || item.category || "Not specified";
-            const location = item.location || item.coverage || "Not specified";
-            const source = safeUrl(item.sourceUrl);
-
-            return `
-                <tr>
-                    <td>${safe(commodity)}</td>
-                    <td>${safe(item.price)}</td>
-                    <td>${safe(item.unit)}</td>
-                    <td>${safe(priceType)}</td>
-                    <td>${safe(location)}</td>
-                    <td>
-                        ${safe(item.date)}
-                        ${source ? `
-                            <br>
-                            <a href="${source}" target="_blank" rel="noopener noreferrer">
-                                Source
-                            </a>
-                        ` : ""}
-                    </td>
-                </tr>
-            `;
-        }).join("");
-    }
-
-    function renderCrops() {
-        if (!cropList) return;
-
-        const crops = getCrops();
-
-        if (crops.length === 0) {
-            cropList.innerHTML = `
-                <p>No crop information available.</p>
-            `;
-            return;
-        }
-
-        cropList.innerHTML = crops.map(crop => {
-            const reminders = Array.isArray(crop.reminders)
-                ? crop.reminders
-                : [
-                    crop.plantingReminder,
-                    crop.harvestReminder,
-                    crop.marketReminder
-                ].filter(Boolean);
-
-            return `
-                <div class="crop-card">
-                    <h3>${safe(crop.icon || "🌱")} ${safe(crop.name)}</h3>
-
-                    <p>${safe(crop.description || "No description available.")}</p>
-
-                    <ul>
-                        ${reminders.map(reminder => `
-                            <li>${safe(reminder)}</li>
-                        `).join("")}
-                    </ul>
-                </div>
-            `;
-        }).join("");
-    }
-
-    function showMapOverview() {
-        if (!buyerMapPanel) return;
-
-        const potentialBuyers = getBuyers().filter(buyer =>
-            getStatus(buyer).toLowerCase() === "potential"
-        );
-
-        buyerMapPanel.innerHTML = `
-            <div class="map-overview">
-                <h3>Potential Buyer Locator</h3>
-
-                <p>
-                    Select a map marker to view the buyer's available
-                    information and contact details.
-                </p>
-
-                <div class="map-overview-stat">
-                    <strong>${potentialBuyers.length}</strong>
-                    <span>Potential buyers in the directory</span>
-                </div>
-
-                <div class="map-overview-stat">
-                    <strong>${geocodedBuyers.length}</strong>
-                    <span>Buyers represented by map markers</span>
-                </div>
-
-                <p class="map-note">
-                    Some markers represent approximate municipality
-                    or province locations. Confirm the exact business
-                    address before travelling.
-                </p>
+    if (filteredBuyers.length === 0) {
+        buyerList.innerHTML = `
+            <div class="empty-state">
+                <h3>No buyer found</h3>
+                <p>Try another search term or select a different filter.</p>
             </div>
         `;
+        return;
     }
 
-    function showBuyerInformation(buyer, approximate) {
-        if (!buyerMapPanel) return;
+    buyerList.innerHTML = filteredBuyers.map(buyer => {
+        const products = Array.isArray(buyer.products)
+            ? buyer.products
+            : [];
 
-        selectedBuyer = buyer;
+        const statusClass =
+            String(buyer.status ?? "").toLowerCase() === "potential"
+                ? "potential"
+                : "regional";
 
-        const source = safeUrl(buyer.sourceUrl);
-        const phone = getPhone(buyer);
-        const address = getBuyerAddress(buyer);
+        return `
+            <article class="buyer-card">
+                <div class="buyer-card-top">
+                    <span class="buyer-icon">🏢</span>
 
-        buyerMapPanel.innerHTML = `
-            <div class="map-buyer-information">
-                <h3>${safe(buyer.name)}</h3>
+                    <span class="status-badge ${statusClass}">
+                        ${safe(buyer.status || "Potential")}
+                    </span>
+                </div>
 
-                <span class="buyer-status">
-                    ${safe(getStatus(buyer))}
-                </span>
+                <h3>${safe(buyer.name || "Unnamed buyer")}</h3>
 
-                <p>
-                    <strong>Address:</strong><br>
-                    ${safe(address)}
+                <p class="buyer-location">
+                    📍 ${safe(buyer.address || "Location unavailable")}
                 </p>
 
-                <p>
-                    <strong>Contact Number:</strong><br>
-                    ${safe(phone)}
-                </p>
+                <div class="buyer-products">
+                    ${products.map(product =>
+                        `<span>${safe(product)}</span>`
+                    ).join("")}
+                </div>
 
-                <p>
-                    <strong>Products / Commodities:</strong><br>
-                    ${safe(getProducts(buyer))}
-                </p>
+                ${buyer.phone ? `
+                    <p class="buyer-location">
+                        ☎ ${safe(buyer.phone)}
+                    </p>
+                ` : ""}
 
-                <p>
-                    <strong>Additional Information:</strong><br>
+                <p class="buyer-notes">
                     ${safe(buyer.notes || "No additional information available.")}
                 </p>
 
-                <p>
-                    <strong>Location Accuracy:</strong><br>
-                    ${approximate
-                        ? "Approximate area marker. This is not a confirmed exact business location."
-                        : safe(getBuyerAccuracy(buyer))}
+                <p class="location-accuracy">
+                    <strong>Location:</strong>
+                    ${safe(buyer.locationAccuracy || "Not verified")}
                 </p>
 
-                ${source ? `
-                    <p>
-                        <a href="${source}" target="_blank" rel="noopener noreferrer">
-                            View Information Source
+                <a href="${safeUrl(buyer.sourceUrl)}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="text-link">
+                    View reference ↗
+                </a>
+            </article>
+        `;
+    }).join("");
+}
+
+function renderPrices() {
+    if (!priceRows) {
+        console.error("Price table element #priceRows was not found.");
+        return;
+    }
+
+    const prices = getPrices();
+
+    if (prices.length === 0) {
+        priceRows.innerHTML = `
+            <tr>
+                <td colspan="7">Market price information is currently unavailable.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    priceRows.innerHTML = prices.map(item => {
+        if (!item || typeof item !== "object") return "";
+
+        const commodity = item.commodity || "Unknown commodity";
+        const price = item.price ?? "N/A";
+        const unit = item.unit || "kg";
+
+        const category = String(
+            item.category ?? item.priceType ?? "Not specified"
+        );
+
+        const categoryClass = category
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
+
+        const coverage = item.coverage ?? item.location ?? "Not specified";
+        const date = item.date || "Not specified";
+        const source = item.source || "Source unavailable";
+        const sourceUrl = safeUrl(item.sourceUrl);
+
+        return `
+            <tr>
+                <td><strong>${safe(commodity)}</strong></td>
+                <td class="price-value">${safe(price)}</td>
+                <td>${safe(unit)}</td>
+
+                <td>
+                    <span class="price-category ${safe(categoryClass)}">
+                        ${safe(category)}
+                    </span>
+                </td>
+
+                <td>${safe(coverage)}</td>
+                <td>${safe(date)}</td>
+
+                <td>
+                    ${sourceUrl !== "#" ? `
+                        <a href="${sourceUrl}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            ${safe(source)} ↗
                         </a>
+                    ` : safe(source)}
+
+                    <p class="price-notes">
+                        ${safe(item.notes || "")}
                     </p>
-                ` : ""}
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
 
-                ${phone !== "Not available" ? `
-                    <a href="tel:${safe(phone)}" class="map-contact-link">
-                        Contact Buyer
-                    </a>
-                ` : ""}
+function renderCrops() {
+    if (!cropList) {
+        console.error("Crop guide element #cropList was not found.");
+        return;
+    }
 
-                <p class="map-note">
-                    Buyer status is listed as potential. Farmers should
-                    contact the buyer first to confirm current purchasing
-                    requirements, accepted crops, volume, prices, delivery,
-                    and payment terms.
-                </p>
+    const crops = getCrops();
+
+    if (crops.length === 0) {
+        cropList.innerHTML = `
+            <div class="empty-state">
+                <h3>No crop information available</h3>
+                <p>Please check the crop data.</p>
             </div>
         `;
+        return;
     }
 
-    function isPotentialBuyer(buyer) {
-        return getStatus(buyer).toLowerCase() === "potential";
+    cropList.innerHTML = crops.map(crop => {
+        if (!crop || typeof crop !== "object") return "";
+
+        const reminders = [
+            crop.reminders,
+            crop.plantingReminder,
+            crop.harvestReminder,
+            crop.marketReminder
+        ].filter(value => value && String(value).trim());
+
+        return `
+            <article class="crop-card">
+                <div class="crop-icon">
+                    ${safe(crop.icon || "🌱")}
+                </div>
+
+                <h3>${safe(crop.name || "Unnamed crop")}</h3>
+
+                <p>
+                    ${safe(crop.description || "No description available.")}
+                </p>
+
+                <div class="crop-reminder">
+                    <strong>Farmer reminders</strong>
+
+                    ${reminders.length > 0
+                        ? reminders.map(reminder => `
+                            <p>${safe(reminder)}</p>
+                        `).join("")
+                        : "<p>No reminders available.</p>"
+                    }
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+function updateMapPanel(buyer) {
+    const panel = document.getElementById("buyerMapPanel");
+
+    if (!panel || !buyer) return;
+
+    const products = Array.isArray(buyer.products)
+        ? buyer.products
+        : [];
+
+    const statusClass =
+        String(buyer.status ?? "").toLowerCase() === "potential"
+            ? "potential"
+            : "regional";
+
+    panel.innerHTML = `
+        <div class="panel-details">
+            <button class="back-button" id="backToOverview">
+                ← Back to overview
+            </button>
+
+            <span class="eyebrow">BUYER INFORMATION</span>
+
+            <span class="status-badge ${statusClass}">
+                ${safe(buyer.status || "Potential")}
+            </span>
+
+            <h3>${safe(buyer.name || "Unnamed buyer")}</h3>
+
+            <div class="detail-item">
+                <strong>Location</strong>
+                <p>${safe(buyer.address || "Not specified")}</p>
+            </div>
+
+            ${buyer.phone ? `
+                <div class="detail-item">
+                    <strong>Contact number</strong>
+                    <p>${safe(buyer.phone)}</p>
+                </div>
+            ` : ""}
+
+            <div class="detail-item">
+                <strong>Products</strong>
+                <p>${products.map(safe).join(", ") || "Not specified"}</p>
+            </div>
+
+            <div class="detail-item">
+                <strong>Location accuracy</strong>
+                <p>${safe(buyer.locationAccuracy || "Not verified")}</p>
+            </div>
+
+            <div class="detail-item">
+                <strong>Important information</strong>
+                <p>${safe(buyer.notes || "No additional information.")}</p>
+            </div>
+
+            <a href="${safeUrl(buyer.sourceUrl)}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="btn btn-primary full-width">
+                View Source
+            </a>
+        </div>
+    `;
+
+    const backButton = document.getElementById("backToOverview");
+
+    if (backButton) {
+        backButton.addEventListener("click", showMapOverview);
     }
+}
 
-    function getGeocodingQueries(buyer) {
-        const queries = [];
+function showMapOverview() {
+    const panel = document.getElementById("buyerMapPanel");
 
-        if (buyer.geocodeQuery) {
-            queries.push(buyer.geocodeQuery);
-        }
+    if (!panel) return;
 
-        if (buyer.address) {
-            queries.push(buyer.address + ", Philippines");
-        }
+    const buyers = getBuyers();
 
-        if (buyer.name && buyer.address) {
-            queries.push(buyer.name + ", " + buyer.address + ", Philippines");
-        }
+    const mappedCount = buyerMarkers.length;
 
-        if (buyer.name) {
-            queries.push(buyer.name + ", Bukidnon, Philippines");
-        }
+    const unmappedCount = buyers.filter(buyer =>
+        buyer &&
+        String(buyer.status ?? "").toLowerCase() === "potential" &&
+        !buyer.geocodeQuery
+    ).length;
 
-        return [...new Set(queries.filter(Boolean))];
-    }
+    panel.innerHTML = `
+        <div class="panel-overview">
+            <span class="eyebrow">MAP OVERVIEW</span>
 
-    async function geocodeWithPhoton(query) {
-        try {
-            const url =
-                "https://photon.komoot.io/api/?q=" +
-                encodeURIComponent(query) +
-                "&limit=5";
+            <h3>Potential Buyer Locations</h3>
 
-            const response = await fetch(url);
+            <p>
+                Select a green marker on the map to view buyer
+                information and contact details.
+            </p>
 
-            if (!response.ok) {
-                return [];
-            }
+            <div class="map-stat">
+                <strong id="mappedCount">${mappedCount}</strong>
+                <span>Potential buyer locations mapped</span>
+            </div>
 
-            const data = await response.json();
+            <div class="map-stat">
+                <strong id="regionalCount">${unmappedCount}</strong>
+                <span>Potential leads without a mappable address</span>
+            </div>
 
-            return data.features || [];
-        } catch (error) {
-            console.error("Geocoding error:", error);
-            return [];
-        }
-    }
+            <p class="small-note">
+                Some markers represent approximate areas. Confirm
+                the exact business location by phone before traveling.
+            </p>
+        </div>
+    `;
+}
 
-    function scoreLocation(feature, buyer) {
-        const properties = feature.properties || {};
+function delay(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
 
-        const description = [
-            properties.name,
-            properties.city,
-            properties.district,
-            properties.county,
-            properties.state,
-            properties.country,
-            properties.street,
-            properties.postcode
-        ].join(" ").toLowerCase();
+function isLocalBukidnonResult(properties) {
+    const country = String(properties.country || "").toLowerCase();
 
-        let score = 0;
+    const locationParts = [
+        properties.state,
+        properties.county,
+        properties.city,
+        properties.district,
+        properties.locality,
+        properties.name,
+        properties.street
+    ];
 
-        const name = (buyer.name || "").toLowerCase();
-        const address = getBuyerAddress(buyer).toLowerCase();
+    const locationText = locationParts
+        .map(value => String(value || "").toLowerCase())
+        .join(" ");
 
-        if (name && description.includes(name)) {
-            score += 10;
-        }
+    const localTerms = [
+        "bukidnon",
+        "manolo fortich",
+        "damilag",
+        "alae",
+        "tankulan",
+        "san miguel",
+        "puerto",
+        "menzi"
+    ];
 
-        if (address.includes("manolo fortich") &&
-            description.includes("manolo fortich")) {
-            score += 8;
-        }
+    return country.includes("philippines") &&
+        localTerms.some(term => locationText.includes(term));
+}
 
-        if (address.includes("damilag") &&
-            description.includes("damilag")) {
-            score += 8;
-        }
+async function geocodeWithPhoton(query) {
+    const endpoint =
+        "https://photon.komoot.io/api/?limit=5&q=" +
+        encodeURIComponent(query);
 
-        if (address.includes("alae") &&
-            description.includes("alae")) {
-            score += 8;
-        }
+    try {
+        const response = await fetch(endpoint);
 
-        if (address.includes("tankulan") &&
-            description.includes("tankulan")) {
-            score += 8;
-        }
+        if (!response.ok) return null;
 
-        if (address.includes("san miguel") &&
-            description.includes("san miguel")) {
-            score += 8;
-        }
+        const data = await response.json();
 
-        if (address.includes("puerto") &&
-            description.includes("puerto")) {
-            score += 8;
-        }
+        if (!Array.isArray(data.features)) return null;
 
-        if (address.includes("misamis oriental") &&
-            description.includes("misamis oriental")) {
-            score += 6;
-        }
+        const feature = data.features.find(item => {
+            const properties = item?.properties || {};
+            return isLocalBukidnonResult(properties);
+        });
 
-        if (address.includes("bukidnon") &&
-            description.includes("bukidnon")) {
-            score += 6;
-        }
+        if (!feature?.geometry?.coordinates) return null;
 
-        if (
-            properties.country &&
-            properties.country.toLowerCase().includes("philippines")
-        ) {
-            score += 5;
-        }
-
-        if (properties.street || properties.housenumber) {
-            score += 3;
-        }
-
-        return score;
-    }
-
-    function isApproximateLocation(feature, buyer) {
-        const properties = feature.properties || {};
-
-        const type = String(properties.type || "").toLowerCase();
-
-        const broadTypes = [
-            "state",
-            "county",
-            "district",
-            "city",
-            "locality",
-            "municipality"
-        ];
-
-        const broadAddress =
-            !buyer.geocodeQuery &&
-            (!buyer.address ||
-                buyer.address.toLowerCase() === "bukidnon, philippines" ||
-                buyer.address.toLowerCase() === "misamis oriental, philippines");
-
-        return broadTypes.includes(type) ||
-            broadAddress ||
-            Boolean(buyer.locationAccuracy &&
-                buyer.locationAccuracy.toLowerCase().includes("approximate"));
-    }
-
-    function createPotentialMarker(buyer, feature) {
         const coordinates = feature.geometry.coordinates;
 
-        const longitude = coordinates[0];
-        const latitude = coordinates[1];
-
-        const approximate = isApproximateLocation(feature, buyer);
-
-        const marker = L.circleMarker(
-            [latitude, longitude],
-            {
-                radius: 9,
-                color: "#003013",
-                weight: 2,
-                fillColor: "#518044",
-                fillOpacity: 0.95
-            }
-        );
-
-        marker.bindTooltip(
-            safe(buyer.name) +
-            (approximate ? " (Approximate location)" : ""),
-            {
-                direction: "top"
-            }
-        );
-
-        marker.bindPopup(`
-            <div>
-                <strong>${safe(buyer.name)}</strong>
-                <br>
-                ${approximate
-                    ? "Approximate location"
-                    : "Potential buyer"}
-                <br>
-                <small>Click the marker for more information.</small>
-            </div>
-        `);
-
-        marker.on("click", () => {
-            showBuyerInformation(buyer, approximate);
-        });
-
-        marker.addTo(buyerMap);
-
-        buyerMarkers.push(marker);
-
-        geocodedBuyers.push({
-            buyer,
-            marker,
-            approximate
-        });
-    }
-
-    function delay(milliseconds) {
-        return new Promise(resolve => setTimeout(resolve, milliseconds));
-    }
-
-    async function locateBuyer(buyer) {
-        const queries = getGeocodingQueries(buyer);
-
-        for (const query of queries) {
-            const results = await geocodeWithPhoton(query);
-
-            if (results.length > 0) {
-                const sortedResults = results
-                    .filter(feature =>
-                        feature.geometry &&
-                        feature.geometry.coordinates &&
-                        feature.geometry.coordinates.length === 2
-                    )
-                    .sort((a, b) =>
-                        scoreLocation(b, buyer) - scoreLocation(a, buyer)
-                    );
-
-                if (sortedResults.length > 0) {
-                    return sortedResults[0];
-                }
-            }
-
-            await delay(350);
+        if (
+            coordinates.length < 2 ||
+            !Number.isFinite(coordinates[0]) ||
+            !Number.isFinite(coordinates[1])
+        ) {
+            return null;
         }
 
+        return coordinates;
+
+    } catch (error) {
+        console.warn("Photon geocoding failed:", error);
         return null;
     }
+}
 
-    async function loadPotentialBuyerMarkers() {
-        const potentialBuyers = getBuyers().filter(isPotentialBuyer);
+async function geocodeBuyer(buyer) {
+    if (!buyer) return null;
 
-        geocodedBuyers = [];
-        buyerMarkers = [];
+    const query = String(
+        buyer.geocodeQuery || buyer.address || ""
+    ).trim();
 
-        if (mapLoadStatus) {
-            mapLoadStatus.textContent =
-                "Locating all potential buyers...";
+    if (!query) return null;
+
+    return await geocodeWithPhoton(query);
+}
+
+function createPotentialMarker(buyer, coordinates) {
+    if (!buyerMap || !coordinates) return;
+
+    const marker = L.circleMarker(
+        [coordinates[1], coordinates[0]],
+        {
+            radius: 9,
+            color: "#003013",
+            weight: 2,
+            opacity: 1,
+            fillColor: "#4CAF50",
+            fillOpacity: 0.95
         }
+    ).addTo(buyerMap);
 
-        showMapOverview();
-
-        for (let index = 0; index < potentialBuyers.length; index++) {
-            const buyer = potentialBuyers[index];
-
-            if (mapLoadStatus) {
-                mapLoadStatus.textContent =
-                    `Locating buyer ${index + 1} of ${potentialBuyers.length}: ${buyer.name}`;
-            }
-
-            const location = await locateBuyer(buyer);
-
-            if (location) {
-                createPotentialMarker(buyer, location);
-            }
-
-            await delay(1100);
+    marker.bindTooltip(
+        `<strong>${safe(buyer.name || "Potential buyer")}</strong><br>Potential buyer`,
+        {
+            direction: "top",
+            offset: [0, -8]
         }
+    );
 
-        if (buyerMarkers.length > 0) {
-            const group = L.featureGroup(buyerMarkers);
+    marker.bindPopup(`
+        <div class="map-popup">
+            <strong>${safe(buyer.name || "Potential buyer")}</strong>
+            <p>${safe(buyer.address || "Location not specified")}</p>
+            <span>Potential buyer</span>
+        </div>
+    `);
 
-            buyerMap.fitBounds(group.getBounds(), {
-                padding: [40, 40],
-                maxZoom: 13
-            });
-        }
+    marker.on("click", () => {
+        updateMapPanel(buyer);
+    });
 
-        showMapOverview();
+    buyerMarkers.push(marker);
+}
 
-        if (mapLoadStatus) {
-            const located = geocodedBuyers.length;
-            const total = potentialBuyers.length;
+function initializeMap() {
+    const mapElement = document.getElementById("buyerMap");
 
-            if (located === total) {
-                mapLoadStatus.textContent =
-                    `All ${total} potential buyers have map markers.`;
-            } else {
-                mapLoadStatus.textContent =
-                    `${located} of ${total} potential buyers were located. ` +
-                    `${total - located} could not be placed because the map service did not return a usable location.`;
-            }
-        }
+    if (!mapElement) {
+        console.error("Map element #buyerMap was not found.");
+        return;
     }
 
-    function initializeMap() {
-        const mapElement = document.getElementById("buyerMap");
-
-        if (!mapElement) return;
-
-        if (typeof L === "undefined") {
-            if (mapLoadStatus) {
-                mapLoadStatus.textContent =
-                    "Map could not load. Please check the Leaflet library.";
-            }
-            return;
+    if (typeof L === "undefined") {
+        if (mapStatus) {
+            mapStatus.textContent =
+                "Map library unavailable. Check your internet connection.";
         }
+        return;
+    }
 
-        buyerMap = L.map("buyerMap");
+    if (buyerMap || mapIsLoading) return;
+
+    mapIsLoading = true;
+
+    try {
+        buyerMap = L.map(mapElement).setView([8.369, 124.865], 10);
 
         L.tileLayer(
             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }
         ).addTo(buyerMap);
 
-        buyerMap.setView([8.3, 124.7], 8);
-
         showMapOverview();
 
         loadPotentialBuyerMarkers();
+
+        setTimeout(() => {
+            if (buyerMap) {
+                buyerMap.invalidateSize();
+            }
+        }, 400);
+
+    } catch (error) {
+        console.error("Map initialization failed:", error);
+
+        if (mapStatus) {
+            mapStatus.textContent =
+                "Unable to initialize the map. Check the map configuration.";
+        }
+    } finally {
+        mapIsLoading = false;
+    }
+}
+
+async function loadPotentialBuyerMarkers() {
+    const potentialBuyers = getBuyers().filter(buyer =>
+        buyer &&
+        String(buyer.status ?? "").toLowerCase() === "potential" &&
+        (buyer.geocodeQuery || buyer.address)
+    );
+
+    let mapped = 0;
+    let failed = 0;
+
+    for (let index = 0; index < potentialBuyers.length; index++) {
+        const buyer = potentialBuyers[index];
+
+        if (mapStatus) {
+            mapStatus.textContent =
+                `Locating potential buyers... ${index + 1} of ${potentialBuyers.length}`;
+        }
+
+        const coordinates = await geocodeBuyer(buyer);
+
+        if (coordinates) {
+            createPotentialMarker(buyer, coordinates);
+            mapped++;
+        } else {
+            failed++;
+        }
+
+        if (index < potentialBuyers.length - 1) {
+            await delay(1100);
+        }
     }
 
-    if (buyerSearch) {
-        buyerSearch.addEventListener("input", renderBuyers);
+    if (buyerMarkers.length > 0 && buyerMap) {
+        const group = L.featureGroup(buyerMarkers);
+        buyerMap.fitBounds(group.getBounds().pad(0.2));
     }
 
-    if (statusFilter) {
-        statusFilter.addEventListener("change", renderBuyers);
+    showMapOverview();
+
+    if (mapStatus) {
+        mapStatus.textContent =
+            `${mapped} potential buyer locations mapped. ${failed} locations could not be verified by the map service.`;
     }
+}
 
-    const menuToggle = document.getElementById("menuToggle");
-    const mainNav = document.getElementById("mainNav");
+if (buyerSearch) {
+    buyerSearch.addEventListener("input", renderBuyers);
+}
 
-    if (menuToggle && mainNav) {
-        menuToggle.addEventListener("click", () => {
-            mainNav.classList.toggle("active");
-        });
-    }
+if (statusFilter) {
+    statusFilter.addEventListener("change", renderBuyers);
+}
 
-    renderBuyers();
-    renderPrices();
-    renderCrops();
-    initializeMap();
+const menuToggle = document.getElementById("menuToggle");
+const mainNav = document.getElementById("mainNav");
+
+if (menuToggle && mainNav) {
+    menuToggle.addEventListener("click", () => {
+        mainNav.classList.toggle("active");
+    });
+}
+
+document.querySelectorAll(".nav a").forEach(link => {
+    link.addEventListener("click", () => {
+        mainNav?.classList.remove("active");
+    });
 });
+
+renderBuyers();
+renderPrices();
+renderCrops();
+initializeMap();
